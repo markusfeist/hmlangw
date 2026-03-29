@@ -1,44 +1,58 @@
 # HMLANGW
 
-Diese Komponente stellt die Funktioen eines HMLANGateways (HomeMatic RF-LAN Gateway)
+Diese Komponente stellt die Funktionen eines HMLANGateways (HomeMatic RF-LAN Gateway)
 auf Basis eines Homematic CoPros bereit.
 Der CoPro muss dafür die Firmware 1.4.1 (oder höher) installiert haben.
 
-Dieses Service passiert auf dem HMLANGW von Oliver Kastl und Jens Maus:
+Dieses Service basiert auf dem HMLANGW von Oliver Kastl und Jens Maus:
 
-- https://homematic-forum.de/forum/viewtopic.php?t=27705
-- https://github.com/OpenCCU/OpenCCU/tree/a228d89a4fb2652a606e7b1c86228e982cc88592/buildroot-external/package/hmlangw
+- <https://homematic-forum.de/forum/viewtopic.php?t=27705>
+- <https://github.com/OpenCCU/OpenCCU/tree/a228d89a4fb2652a606e7b1c86228e982cc88592/buildroot-external/package/hmlangw>
 
-Es wird die Möglichkeit ergänzt, den CoPro per Netzwerk anzusprechen. Damit wird es möglich einen CoPro in einem CUNX
+Es wird die Möglichkeit ergänzt, den CoPro per Netzwerk anzusprechen. Damit wird es möglich, einen CoPro in einem CUNX
 mit Homematic Pigator oder an einer seriellen Schnittstelle des MappleCUN zu nutzen.
 
 Die Idee ist dabei:
+```
 CCU (z.B. OpenCCU) -Netzwerk-> HMLANGW -Netzwerk-> CoPro
+```
 
-> [!WARNING]
+> **Warnung**
 > Die Update des CoPro über Netzwerk (oder auch direkt) wurde von mir nicht getestet! Ein Aufruf erfolgt auf eigene
 > Gefahr. (Meine CoPro habe ich damals per FHEM geupdatet.)
 
-# Erstellen
+---
 
-Mit:
+## Inhaltsverzeichnis
 
-```
+- [Erstellen](#erstellen)
+- [Parameter](#parameter)
+- [Installation als Debian-Paket](#installation-als-debian-paket)
+- [Installation als Docker-Container](#installation-als-docker-container)
+- [Lizenz](#lizenz)
+
+---
+
+## Erstellen
+
+```bash
+# Kompilieren
 make all
-```
 
-wird das Projekt compiliert.
-Mit:
-
-```
+# Debian-Paket erzeugen
 make deb
 ```
 
-wird ein Debian Paket erzeugt. Es wird für die Plattform compiliert, auf der das Make-Skript ausgeführt wird.
+Das Paket wird für die Plattform kompiliert, auf der das Make-Skript ausgeführt wird.
+Für Cross-Kompilierung können `CXX`, `VERSION` und `ARCH` überschrieben werden:
 
-# Parameter
+```bash
+make deb CXX=aarch64-linux-gnu-g++ VERSION=1.2.0 ARCH=arm64
+```
 
-Die Parameter sind:
+---
+
+## Parameter
 
 ```
 -n n    Specify 10-digit serial number
@@ -63,25 +77,17 @@ Die Parameter sind:
 -V      show version (1.1.0)
 ```
 
-# Installation
+---
 
-Mit
+## Installation als Debian-Paket
 
-```
-dpki -i <Paket>
-```
-
-z.B.:
-
-```
-dpki -i hmlangw_1.0.0_amd64.deb
+```bash
+dpkg -i hmlangw_1.0.0_amd64.deb
 ```
 
-wird das Paket installiert.
-Unter `/etc/default/hmlangw` kann die Konfiguration vorgenommen werden.
-Es sind dabei folgende Parameter möglich:
+Unter `/etc/default/hmlangw` kann die Konfiguration vorgenommen werden:
 
-```
+```bash
 # Seriennummer des Gateways
 HM_SERIAL=OEQ0610638
 
@@ -92,10 +98,105 @@ HM_SERVER=192.168.6.10:2324
 HM_PARAMS=-t
 ```
 
-Der Parameter `-t` aktiviert dabei den Netzwerkzugriff. (Mit Entfernen des Parameter und Anpassung von `HM_SERVER` auf
-den seriellen Anschluss kann also das Modul für den Zugriff auf einen lokalen CoPro genutzt werden.)
+Der Parameter `-t` aktiviert den Netzwerkzugriff. Ohne `-t` und mit einem seriellen Pfad als `HM_SERVER`
+kann das Modul auch für den Zugriff auf einen lokalen CoPro genutzt werden.
 
-# Lizenz
+---
 
-Ich veröffentliche dieses angepasste HMLANGW-Modul wie das ursprüngliche unter der MIT Lizenz siehe
-auch [LICENSE](LICENSE).
+## Installation als Docker-Container
+
+Neben der klassischen Debian-Paket-Installation kann `hmlangw` auch als Docker-Container betrieben werden.
+
+### Voraussetzungen
+
+- Docker ≥ 20.10
+- Docker Compose ≥ 2.x (optional, empfohlen)
+
+### Schnellstart mit Docker Compose
+
+1. `docker-compose.yml` anpassen:
+
+   ```yaml
+   environment:
+     HM_SERIAL: "OEQ0610638"        # eigene Seriennummer eintragen
+     HM_SERVER: "192.168.6.10:2324"  # IP:Port des CoPro
+     HM_PARAMS: "-t"                 # -t = Netzwerkzugriff
+   ```
+
+2. Container bauen und starten:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. Logs verfolgen:
+
+   ```bash
+   docker compose logs -f
+   ```
+
+### Manuell mit Docker
+
+```bash
+# Image bauen
+docker build -t hmlangw .
+
+# Container starten (Netzwerk-CoPro)
+docker run -d \
+  --name hmlangw \
+  --restart unless-stopped \
+  --network host \
+  -e HM_SERIAL="OEQ0610638" \
+  -e HM_SERVER="192.168.6.10:2324" \
+  -e HM_PARAMS="-t" \
+  -v hmlangw_data:/data \
+  hmlangw
+```
+
+### Lokaler serieller CoPro
+
+Soll ein direkt angeschlossener CoPro (z.B. `/dev/ttyAMA0`) genutzt werden,
+`-t` aus `HM_PARAMS` entfernen und das Gerät durchreichen:
+
+```bash
+docker run -d \
+  --name hmlangw \
+  --restart unless-stopped \
+  --network host \
+  -e HM_SERIAL="OEQ0610638" \
+  -e HM_SERVER="/dev/ttyAMA0" \
+  -e HM_PARAMS="" \
+  -v hmlangw_data:/data \
+  --device /dev/ttyAMA0:/dev/ttyAMA0 \
+  hmlangw
+```
+
+Oder in `docker-compose.yml` die `devices`-Sektion einkommentieren.
+
+### Fertige Images (GitHub Container Registry)
+
+```bash
+docker pull ghcr.io/markusfeist/hmlangw:latest
+```
+
+### Umgebungsvariablen
+
+| Variable    | Standard | Bedeutung                                  |
+|-------------|----------|--------------------------------------------|
+| `HM_SERIAL` | _(leer)_ | 10-stellige Seriennummer des Gateways      |
+| `HM_SERVER` | _(leer)_ | Adresse:Port des CoPro oder serieller Pfad |
+| `HM_PARAMS` | `-t`     | Zusätzliche Parameter (siehe `hmlangw -h`) |
+
+### Hinweise
+
+- Der Container verwendet **kein** systemd. Der Daemon läuft direkt als PID 1 über das Entrypoint-Skript.
+- `--restart unless-stopped` sorgt für automatischen Neustart nach einem Absturz oder System-Neuboot.
+- Die Datei `serialnumber.txt` wird im Docker-Volume `/data` gespeichert und beim ersten Start automatisch angelegt.
+- Für GPIO-Reset-Unterstützung (`-r <pin>`) muss der Container mit `--privileged` oder passendem `--device` gestartet werden.
+
+---
+
+## Lizenz
+
+Ich veröffentliche dieses angepasste HMLANGW-Modul wie das ursprüngliche unter der MIT Lizenz –
+siehe auch [LICENSE](LICENSE).
