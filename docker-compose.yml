@@ -21,9 +21,16 @@ services:
       #   -b   CoPro NICHT in Bootloader-Modus versetzen
       HM_PARAMS: "-t"
 
-    # Port, auf dem der Gateway für die CCU erreichbar ist
-    ports:
-      - "2000:2000"
+    # network_mode: host – Container nutzt direkt den Netzwerk-Stack des Hosts.
+    # Vorteile: DNS, Routing und alle Adressen funktionieren wie außerhalb des Containers.
+    # Hinweis: ports-Mapping ist bei host-Netzwerk nicht nötig (und wird ignoriert),
+    #          der Gateway ist automatisch auf Port 2000 (BidCoS) und 2001 (Keepalive) des Hosts erreichbar.
+    network_mode: host
+
+    #Alternativ (Port müssen für eine CCU fest 2000 und 2001 sein:
+    #ports:
+    #  - "2000:2000"
+    #  - "2001:2001"
 
     # Persistente Ablage der Seriennummer-Datei
     volumes:

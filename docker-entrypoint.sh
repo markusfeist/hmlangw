@@ -10,7 +10,6 @@ SERIAL_LINK="/opt/hmlangw/serialnumber.txt"
 # Der Daemon sucht die Datei im eigenen Arbeitsverzeichnis.
 # Das Volume liegt unter /data, daher wird ein Symlink gesetzt.
 # -------------------------------------------------------
-mkdir -p /data
 if [ ! -L "$SERIAL_LINK" ]; then
     ln -sf "$SERIAL_FILE" "$SERIAL_LINK"
     echo "[hmlangw] Symlink gesetzt: ${SERIAL_LINK} -> ${SERIAL_FILE}"

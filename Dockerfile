@@ -39,7 +39,7 @@ COPY --from=builder /build/hmlangw ./hmlangw
 VOLUME ["/data"]
 
 # Port, auf dem der HMLANGW lauscht (Standard: 2000)
-EXPOSE 2000
+EXPOSE 2000 2001
 
 # Konfiguration über Umgebungsvariablen
 # HM_SERIAL  – 10-stellige Seriennummer des Gateways
