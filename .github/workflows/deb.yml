@@ -3,13 +3,12 @@ name: Debian-Paket bauen und veröffentlichen
 on:
   push:
     tags: ["v*"]   # nur bei Versions-Tags, z.B. v1.2.0
-  pull_request:
-    branches: [main]
 
 jobs:
   build-deb:
     name: deb (${{ matrix.arch }})
     runs-on: ubuntu-latest
+    if: github.event.base_ref == 'refs/heads/main'
     permissions:
       contents: write   # für GitHub Release
 
@@ -70,8 +69,7 @@ jobs:
     name: GitHub Release erstellen
     needs: build-deb
     runs-on: ubuntu-latest
-    # Nur bei echtem Tag-Push, nicht bei Pull Requests
-    if: github.event_name != 'pull_request'
+    if: github.event.base_ref == 'refs/heads/main'
     permissions:
       contents: write
 
