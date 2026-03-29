@@ -1,0 +1,46 @@
+services:
+  hmlangw:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hmlangw:latest
+    container_name: hmlangw
+    restart: unless-stopped
+
+    environment:
+      # 10-stellige Seriennummer des HomeMatic Gateways
+      HM_SERIAL: "OEQ0610638"
+
+      # Adresse und Port des CoPro
+      # Netzwerk-CoPro (z.B. CUNX / MappleCUN):
+      HM_SERVER: "192.168.6.10:2324"
+
+      # Zusätzliche Parameter:
+      #   -t   Netzwerkzugriff auf CoPro aktivieren
+      #   -D   Debug-Ausgaben
+      #   -b   CoPro NICHT in Bootloader-Modus versetzen
+      HM_PARAMS: "-t"
+
+    # Port, auf dem der Gateway für die CCU erreichbar ist
+    ports:
+      - "2000:2000"
+
+    # Persistente Ablage der Seriennummer-Datei
+    volumes:
+      - hmlangw_data:/data
+
+    # Für direkten Zugriff auf einen lokalen seriellen CoPro
+    # (Kommentarblock entfernen und HM_PARAMS ohne -t setzen)
+    # devices:
+    #   - /dev/ttyAMA0:/dev/ttyAMA0
+
+    # Healthcheck: prüft ob der Prozess läuft
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep hmlangw || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  hmlangw_data:

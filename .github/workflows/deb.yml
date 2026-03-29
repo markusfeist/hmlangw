@@ -1,0 +1,106 @@
+name: Debian-Paket bauen und veröffentlichen
+
+on:
+  push:
+    tags: ["v*"]   # nur bei Versions-Tags, z.B. v1.2.0
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-deb:
+    name: deb (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # für GitHub Release
+
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            cc: g++
+            apt_extra: ""
+          - arch: arm64
+            cc: aarch64-linux-gnu-g++
+            apt_extra: g++-aarch64-linux-gnu
+          - arch: armhf
+            cc: arm-linux-gnueabihf-g++
+            apt_extra: g++-arm-linux-gnueabihf
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Build-Abhängigkeiten installieren
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            make \
+            dpkg-dev \
+            ${{ matrix.apt_extra }}
+
+      - name: Version aus Git-Tag ermitteln
+        id: version
+        run: |
+          # v1.2.3 -> 1.2.3
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Baue Version: ${VERSION}"
+
+      - name: Debian-Paket bauen
+        run: |
+          make deb \
+            CXX=${{ matrix.cc }} \
+            VERSION=${{ steps.version.outputs.version }} \
+            ARCH=${{ matrix.arch }}
+
+      - name: Paket umbenennen (einheitliches Schema)
+        run: |
+          PKG="hmlangw_${{ steps.version.outputs.version }}_${{ matrix.arch }}.deb"
+          echo "Paket: ${PKG}"
+          ls -lh ${PKG}
+
+      - name: Paket als Artefakt speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: hmlangw_${{ steps.version.outputs.version }}_${{ matrix.arch }}
+          path: hmlangw_${{ steps.version.outputs.version }}_${{ matrix.arch }}.deb
+          retention-days: 30
+
+  release:
+    name: GitHub Release erstellen
+    needs: build-deb
+    runs-on: ubuntu-latest
+    # Nur bei echtem Tag-Push, nicht bei Pull Requests
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Version aus Git-Tag ermitteln
+        id: version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Alle deb-Pakete herunterladen
+        uses: actions/download-artifact@v4
+        with:
+          pattern: hmlangw_*
+          merge-multiple: true
+          path: dist/
+
+      - name: Pakete anzeigen
+        run: ls -lh dist/
+
+      - name: GitHub Release erstellen und Pakete anhängen
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "hmlangw v${{ steps.version.outputs.version }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: dist/*.deb

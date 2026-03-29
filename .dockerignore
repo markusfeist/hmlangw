@@ -1,0 +1,19 @@
+# Build-Artefakte
+*.o
+hmlangw
+hmlangw_*.deb
+hmlangw_*_amd64/
+
+# Paketdaten
+DEBIAN/
+
+# Versionskontrolle
+.git
+.gitignore
+
+# Docs / Tests
+README.md
+LICENSE
+
+# Systemd-Service (nicht im Container benötigt)
+hmlangw.service
