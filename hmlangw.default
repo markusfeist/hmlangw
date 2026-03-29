@@ -1,0 +1,11 @@
+# Konfigurationsdatei für hmlangw
+# Wird eingelesen von /etc/systemd/system/hmlangw.service
+
+# Seriennummer des Gateways
+HM_SERIAL=OEQ0610638
+
+# Adresse und Port des Gateways
+HM_SERVER=192.168.6.10:2324
+
+# Zusätzliche Parameter
+HM_PARAMS=-t

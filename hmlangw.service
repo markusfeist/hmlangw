@@ -1,0 +1,22 @@
+[Unit]
+Description=HomeMatic LAN Gateway (hmlangw)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/hmlangw
+EnvironmentFile=/etc/default/hmlangw
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 15); do ping -c1 -W1 ${HM_SERVER%%:*} &>/dev/null && exit 0; sleep 2; done; exit 1'
+ExecStart=/opt/hmlangw/hmlangw -n ${HM_SERIAL} -s ${HM_SERVER} ${HM_PARAMS}
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=hmlangw
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,5 @@
+.idea
+*.o
+hmlangw
+*.deb
+hmlangw_*_amd64

@@ -1,0 +1,6 @@
+uart://192.168.6.10:2324
+uart://:2000
+sudo ./hmlangw -n OEQ0610638 -r -1 -s /dev/ttyMein -D
+sudo socat -d PTY,link=/dev/ttyMein TCP:192.168.6.10:2324
+
+./hmlangw -n OEQ0610638 -t -s 192.168.6.10:2324 -D
