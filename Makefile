@@ -9,8 +9,8 @@ CXXFLAGS ?= -Wall -pipe -g
 PACKAGE     = hmlangw
 VERSION    ?= 1.0.0
 ARCH       ?= amd64
-MAINTAINER ?= Dein Name <deine@email.de>
-DESCRIPTION = HomeMatic LAN Gateway Daemon
+MAINTAINER ?= Markus Feist Kontakt https://github.com/markusfeist/hmlangw/issues
+DESCRIPTION = HomeMatic LAN Gateway Daemon - Version for Netzwork Proxy
 INSTALLDIR  = /opt/hmlangw
 
 PKG_DIR = $(PACKAGE)_$(VERSION)_$(ARCH)
